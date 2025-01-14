@@ -2,11 +2,10 @@ import mongoose, {  Schema } from "mongoose";
 
 
 const itemSchema= new Schema({
-    item:{
+    itemId:{
         type: mongoose.Schema.Types.ObjectId, 
         ref: "Menu", 
         required:true, 
-        unique:true
     },
     quantity:{
         type: Number, 
@@ -19,7 +18,7 @@ const orderSchema= new Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: "User", 
         required:true, 
-        unique:true
+        unique:false, 
     }, 
     items:[itemSchema],
     totalPrice:{
