@@ -20,13 +20,21 @@ export const addMenuItem= async(req, res)=>{
         if(existingItem)
             return res.status(409).json({success:false, msg: "Menu Item already exists", existingItem: existingItem})
 
+        const result = await cloudinary.uploader.upload(req.file.path);
+        fs.unlinkSync(req.file.path);
+
         const newItem= await Menu.create({
-            itemName, category, price
+            itemName, 
+            category,
+            price,
+            image: result.secure.url
         })
         return res.status(201).json({success:true, msg:"New Menu Item created", menuItem: newItem})
     }
     catch(err)
     {
+        if (req.file && fs.existsSync(req.file.path))
+            fs.unlinkSync(req.file.path);
         return res.status(500).json({success:false, error:err, msg:"There has been some error"})
     }
 }
@@ -60,7 +68,6 @@ export const updateMenuItem = async(req, res)=>{
     }
 }
 
-
 export const deleteMenuItem = async(req, res)=>{
     try{
 
@@ -78,3 +85,5 @@ export const deleteMenuItem = async(req, res)=>{
         return res.status(500).json({success:false, error:err, msg:"There has been some error"})
     }
 }
+
+
