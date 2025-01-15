@@ -1,6 +1,7 @@
 import User from '../models/UserSchema.js'
 import bcrypt from 'bcryptjs'
 import token from '../middleware/generateToken.js'
+
  export const registerUser= async(req, res)=>{
     try
     {
@@ -27,7 +28,6 @@ import token from '../middleware/generateToken.js'
         return res.status(500).json({success:false, error:err})
     }
 }
-
 
  export const loginUser = async (req, res)=>{
     try
@@ -64,4 +64,52 @@ import token from '../middleware/generateToken.js'
     }
 }
 
+export const checkRefreshToken= async(req, res)=>{
+    try
+    {
+        let refreshToken= req.cookies.refreshToken
 
+        if( refreshToken== null)
+            return res.status(401).json({success:false, msg:"Unauthorized access"})
+
+        jwt.verify(refreshToken, process.env.REFRESH_SECRET, async(err, user)=>{
+            //If refresh token is not verified 
+            if(err)
+                return res.status(403).json({success:false, msg:"Forbidden Access"})
+            //If no user with refresh token is found 
+            const dbUser = await User.findOne({ refreshToken });
+            if (!dbUser) 
+                return res.status(403).json({success:false, msg:"Forbidden Access"});
+            //if user is found 
+            const payload= { id: dbUser._id, username: dbUser.username, fullName:dbUser.fullName}
+            const accessToken= token.generateAccessToken(payload)
+            return res.status(200).json({success:true, accessToken})
+        })
+    }
+    catch(err)
+    {
+        console.log("Error in code is: ", err)
+    }
+}
+
+export const logoutUser= async(req, res)=>{
+    const refreshToken= req.cookies.refreshToken
+    if (refreshToken == null) 
+        return res.status(401).json({success:false, msg:"Unauthorized access"});
+
+    try
+    {
+        const user = await User.findOne({ refreshToken });
+        if (!user) 
+            return res.status(403).json({success:false, msg:"Forbidden Access"});
+
+        res.cookie('refreshToken', '', { expires: new Date(0), sameSite:'strict', httpOnly: true });
+        user.refreshToken = null;
+        await user.save();
+        return res.status(204).json({success:true, msg: "User logged out successfully" });
+    }
+    catch(err)
+    {
+        res.status(500).json({success:false,  error: 'Internal Server Error' });
+    }8
+}
