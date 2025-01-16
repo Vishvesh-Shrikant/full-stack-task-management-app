@@ -56,6 +56,13 @@ import token from '../middleware/generateToken.js'
         usernameExists.refreshToken=refreshToken
         usernameExists.save()
 
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true, // Ensures the cookie is accessible only by the web server
+            // secure: process.env.NODE_ENV === 'production', Use HTTPS in production
+            sameSite: 'strict', // Prevent cross-site cookie usage
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+          });
+
         return res.status(200).json({success:true, msg: "User logged in succesfully", user: usernameExists, accessToken: accessToken})
     }
     catch(err)
